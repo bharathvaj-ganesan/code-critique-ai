@@ -152,7 +152,7 @@ export class BedrockOptions {
   tokenLimits: TokenLimits
 
   constructor(
-    model = 'anthropic.claude-instant-v1',
+    model = 'anthropic.claude-3-haiku-20240307-v1:0',
     tokenLimits: TokenLimits | null = null
   ) {
     this.model = model
