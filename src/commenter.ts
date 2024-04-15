@@ -1,4 +1,4 @@
-import {getInput, info, warning} from '@actions/core'
+import {info, warning} from '@actions/core'
 // eslint-disable-next-line camelcase
 import {context as github_context} from '@actions/github'
 import {octokit} from './octokit'
@@ -7,43 +7,45 @@ import {octokit} from './octokit'
 const context = github_context
 const repo = context.repo
 
-export const COMMENT_GREETING = `${getInput('bot_icon')}   CodeCritique`
+export const COMMENT_GREETING = '' //`${getInput('bot_icon')}`
 
 export const COMMENT_TAG =
-  '<!-- This is an auto-generated comment by OSS CodeCritique -->'
+  '<!-- This is an auto-generated comment by AI reviewer -->'
 
 export const COMMENT_REPLY_TAG =
-  '<!-- This is an auto-generated reply by OSS CodeCritique -->'
+  '<!-- This is an auto-generated reply by AI reviewer -->'
 
 export const SUMMARIZE_TAG =
-  '<!-- This is an auto-generated comment: summarize by OSS CodeCritique -->'
+  '<!-- This is an auto-generated comment: summarize by AI reviewer -->'
 
 export const IN_PROGRESS_START_TAG =
-  '<!-- This is an auto-generated comment: summarize review in progress by OSS CodeCritique -->'
+  '<!-- This is an auto-generated comment: summarize review in progress by AI reviewer -->'
 
 export const IN_PROGRESS_END_TAG =
-  '<!-- end of auto-generated comment: summarize review in progress by OSS CodeCritique -->'
+  '<!-- end of auto-generated comment: summarize review in progress by AI reviewer -->'
 
 export const DESCRIPTION_START_TAG =
-  '<!-- This is an auto-generated comment: release notes by OSS CodeCritique -->'
+  '<!-- This is an auto-generated comment: release notes by AI reviewer -->'
 export const DESCRIPTION_END_TAG =
-  '<!-- end of auto-generated comment: release notes by OSS CodeCritique -->'
+  '<!-- end of auto-generated comment: release notes by AI reviewer -->'
 
-export const RAW_SUMMARY_START_TAG = `<!-- This is an auto-generated comment: raw summary by OSS CodeCritique -->
+export const RAW_SUMMARY_START_TAG = `<!-- This is an auto-generated comment: raw summary by AI reviewer -->
 <!--
 `
 export const RAW_SUMMARY_END_TAG = `-->
-<!-- end of auto-generated comment: raw summary by OSS CodeCritique -->`
+<!-- end of auto-generated comment: raw summary by AI reviewer -->`
 
-export const SHORT_SUMMARY_START_TAG = `<!-- This is an auto-generated comment: short summary by OSS CodeCritique -->
+export const SHORT_SUMMARY_START_TAG = `<!-- This is an auto-generated comment: short summary by AI reviewer -->
 <!--
 `
 
 export const SHORT_SUMMARY_END_TAG = `-->
-<!-- end of auto-generated comment: short summary by OSS CodeCritique -->`
+<!-- end of auto-generated comment: short summary by AI reviewer -->`
 
 export const COMMIT_ID_START_TAG = '<!-- commit_ids_reviewed_start -->'
 export const COMMIT_ID_END_TAG = '<!-- commit_ids_reviewed_end -->'
+
+const SELF_LOGIN = 'github-actions[bot]'
 
 export class Commenter {
   /**
@@ -496,16 +498,21 @@ ${chain}
     return allChains
   }
 
+  getRole(login: string) {
+    if (login === SELF_LOGIN) return '\nA (You): '
+    return `\nH (@${login}):`
+  }
+
   async composeCommentChain(reviewComments: any[], topLevelComment: any) {
     const conversationChain = reviewComments
       .filter((cmt: any) => cmt.in_reply_to_id === topLevelComment.id)
-      .map((cmt: any) => `${cmt.user.login}: ${cmt.body}`)
+      .map((cmt: any) => `${this.getRole(cmt.user.login)} ${cmt.body}`)
 
     conversationChain.unshift(
-      `${topLevelComment.user.login}: ${topLevelComment.body}`
+      `${this.getRole(topLevelComment.user.login)} ${topLevelComment.body}`
     )
 
-    return conversationChain.join('\n---\n')
+    return `${conversationChain.join('\n')}`
   }
 
   async getCommentChain(pullNumber: number, comment: any) {

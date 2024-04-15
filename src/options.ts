@@ -6,60 +6,63 @@ export class Options {
   debug: boolean
   disableReview: boolean
   disableReleaseNotes: boolean
+  onlyAllowCollaborator: boolean
   maxFiles: number
   reviewSimpleChanges: boolean
   reviewCommentLGTM: boolean
   pathFilters: PathFilter
   systemMessage: string
-  openaiLightModel: string
-  openaiHeavyModel: string
-  openaiModelTemperature: number
-  openaiRetries: number
-  openaiTimeoutMS: number
-  openaiConcurrencyLimit: number
+  reviewFileDiff: string
+  bedrockLightModel: string
+  bedrockHeavyModel: string
+  bedrockModelTemperature: number
+  bedrockRetries: number
+  bedrockTimeoutMS: number
+  bedrockConcurrencyLimit: number
   githubConcurrencyLimit: number
   lightTokenLimits: TokenLimits
   heavyTokenLimits: TokenLimits
-  apiBaseUrl: string
   language: string
 
   constructor(
     debug: boolean,
     disableReview: boolean,
     disableReleaseNotes: boolean,
+    onlyAllowCollaborator: boolean,
     maxFiles = '0',
     reviewSimpleChanges = false,
     reviewCommentLGTM = false,
     pathFilters: string[] | null = null,
     systemMessage = '',
-    openaiLightModel = 'gpt-3.5-turbo',
-    openaiHeavyModel = 'gpt-3.5-turbo',
-    openaiModelTemperature = '0.0',
-    openaiRetries = '3',
-    openaiTimeoutMS = '120000',
-    openaiConcurrencyLimit = '6',
+    reviewFileDiff = '',
+    bedrockLightModel: string,
+    bedrockHeavyModel: string,
+    bedrockModelTemperature = '0.0',
+    bedrockRetries = '3',
+    bedrockTimeoutMS = '120000',
+    bedrockConcurrencyLimit = '6',
     githubConcurrencyLimit = '6',
-    apiBaseUrl = 'https://api.openai.com/v1',
     language = 'en-US'
   ) {
     this.debug = debug
     this.disableReview = disableReview
     this.disableReleaseNotes = disableReleaseNotes
+    this.onlyAllowCollaborator = onlyAllowCollaborator
     this.maxFiles = parseInt(maxFiles)
     this.reviewSimpleChanges = reviewSimpleChanges
     this.reviewCommentLGTM = reviewCommentLGTM
     this.pathFilters = new PathFilter(pathFilters)
     this.systemMessage = systemMessage
-    this.openaiLightModel = openaiLightModel
-    this.openaiHeavyModel = openaiHeavyModel
-    this.openaiModelTemperature = parseFloat(openaiModelTemperature)
-    this.openaiRetries = parseInt(openaiRetries)
-    this.openaiTimeoutMS = parseInt(openaiTimeoutMS)
-    this.openaiConcurrencyLimit = parseInt(openaiConcurrencyLimit)
+    this.reviewFileDiff = reviewFileDiff
+    this.bedrockLightModel = bedrockLightModel
+    this.bedrockHeavyModel = bedrockHeavyModel
+    this.bedrockModelTemperature = parseFloat(bedrockModelTemperature)
+    this.bedrockRetries = parseInt(bedrockRetries)
+    this.bedrockTimeoutMS = parseInt(bedrockTimeoutMS)
+    this.bedrockConcurrencyLimit = parseInt(bedrockConcurrencyLimit)
     this.githubConcurrencyLimit = parseInt(githubConcurrencyLimit)
-    this.lightTokenLimits = new TokenLimits(openaiLightModel)
-    this.heavyTokenLimits = new TokenLimits(openaiHeavyModel)
-    this.apiBaseUrl = apiBaseUrl
+    this.lightTokenLimits = new TokenLimits(bedrockLightModel)
+    this.heavyTokenLimits = new TokenLimits(bedrockHeavyModel)
     this.language = language
   }
 
@@ -68,21 +71,22 @@ export class Options {
     info(`debug: ${this.debug}`)
     info(`disable_review: ${this.disableReview}`)
     info(`disable_release_notes: ${this.disableReleaseNotes}`)
+    info(`only_allow_collaborator: ${this.onlyAllowCollaborator}`)
     info(`max_files: ${this.maxFiles}`)
     info(`review_simple_changes: ${this.reviewSimpleChanges}`)
     info(`review_comment_lgtm: ${this.reviewCommentLGTM}`)
     info(`path_filters: ${this.pathFilters}`)
     info(`system_message: ${this.systemMessage}`)
-    info(`openai_light_model: ${this.openaiLightModel}`)
-    info(`openai_heavy_model: ${this.openaiHeavyModel}`)
-    info(`openai_model_temperature: ${this.openaiModelTemperature}`)
-    info(`openai_retries: ${this.openaiRetries}`)
-    info(`openai_timeout_ms: ${this.openaiTimeoutMS}`)
-    info(`openai_concurrency_limit: ${this.openaiConcurrencyLimit}`)
+    info(`review_file_diff: ${this.reviewFileDiff}`)
+    info(`bedrock_light_model: ${this.bedrockLightModel}`)
+    info(`bedrock_heavy_model: ${this.bedrockHeavyModel}`)
+    info(`bedrock_model_temperature: ${this.bedrockModelTemperature}`)
+    info(`bedrock_retries: ${this.bedrockRetries}`)
+    info(`bedrock_timeout_ms: ${this.bedrockTimeoutMS}`)
+    info(`bedrock_concurrency_limit: ${this.bedrockConcurrencyLimit}`)
     info(`github_concurrency_limit: ${this.githubConcurrencyLimit}`)
     info(`summary_token_limits: ${this.lightTokenLimits.string()}`)
     info(`review_token_limits: ${this.heavyTokenLimits.string()}`)
-    info(`api_base_url: ${this.apiBaseUrl}`)
     info(`language: ${this.language}`)
   }
 
@@ -112,6 +116,11 @@ export class PathFilter {
     }
   }
 
+  /**
+   * Returns true if the file should be processed, not ignored.
+   * If there is any inclusion rule set, a file is included when it matches any of inclusion rule.
+   * If there is no inclusion rule set, a file is included when it does not matches any of exclusion rule.
+   */
   check(path: string): boolean {
     if (this.rules.length === 0) {
       return true
@@ -138,11 +147,14 @@ export class PathFilter {
   }
 }
 
-export class OpenAIOptions {
+export class BedrockOptions {
   model: string
   tokenLimits: TokenLimits
 
-  constructor(model = 'gpt-3.5-turbo', tokenLimits: TokenLimits | null = null) {
+  constructor(
+    model = 'anthropic.claude-instant-v1',
+    tokenLimits: TokenLimits | null = null
+  ) {
     this.model = model
     if (tokenLimits != null) {
       this.tokenLimits = tokenLimits
