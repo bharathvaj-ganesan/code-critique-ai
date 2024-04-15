@@ -1,9 +1,9 @@
-name: 'AI-based PR Reviewer & Summarizer with Chat Capabilities'
-description: 'AI-based PR Reviewer & Summarizer with Chat Capabilities'
+name: 'Code Critique AI - PR Reviewer & Summarizer'
+description: 'Chat with your PRs to get a summary and review using AI'
 branding:
-  icon: 'git-merge'
-  color: 'orange'
-author: 'SaaS AI Labs'
+  icon: 'git-pull-request'
+  color: 'blue'
+author: 'bharathvaj-ganesan'
 inputs:
   debug:
     required: false
@@ -22,6 +22,10 @@ inputs:
   review_comment_lgtm:
     required: false
     description: 'Leave comments even if the patch is LGTM'
+    default: 'false'
+  only_allow_collaborator:
+    required: false
+    description: 'Allow Bedrock access only for collaborators'
     default: 'false'
   path_filters:
     required: false
@@ -144,35 +148,31 @@ inputs:
     required: false
     description: 'Disable release notes'
     default: 'false'
-  openai_base_url:
-    required: false
-    description: 'The url of the openai api interface.'
-    default: 'https://api.openai.com/v1'
-  openai_light_model:
+  bedrock_light_model:
     required: false
     description:
       'Model to use for simple tasks like summarizing diff on a file.'
-    default: 'gpt-3.5-turbo'
-  openai_heavy_model:
+    default: 'anthropic.claude-3-haiku-20240307-v1:0'
+  bedrock_heavy_model:
     required: false
     description: 'Model to use for complex tasks such as code reviews.'
-    default: 'gpt-4'
-  openai_model_temperature:
+    default: 'anthropic.claude-3-sonnet-20240229-v1:0'
+  bedrock_model_temperature:
     required: false
     description: 'Temperature for GPT model'
     default: '0.05'
-  openai_retries:
+  bedrock_retries:
     required: false
     description:
-      'How many times to retry OpenAI API in case of timeouts or errors?'
+      'How many times to retry Bedrock API in case of timeouts or errors?'
     default: '5'
-  openai_timeout_ms:
+  bedrock_timeout_ms:
     required: false
-    description: 'Timeout for OpenAI API call in millis'
+    description: 'Timeout for Bedrock API call in millis'
     default: '360000'
-  openai_concurrency_limit:
+  bedrock_concurrency_limit:
     required: false
-    description: 'How many concurrent API calls to make to OpenAI servers?'
+    description: 'How many concurrent API calls to make to Bedrock servers?'
     default: '6'
   github_concurrency_limit:
     required: false
@@ -180,28 +180,14 @@ inputs:
     default: '6'
   system_message:
     required: false
-    description: 'System message to be sent to OpenAI'
+    description: 'System message to be sent to Bedrock'
     default: |
-      You are `@code-critique-ai` (aka `github-actions[bot]`), a language model 
-      trained by OpenAI. Your purpose is to act as a highly experienced 
-      software engineer and provide a thorough review of the code hunks
-      and suggest code snippets to improve key areas such as:
-        - Logic
-        - Security
-        - Performance
-        - Data races
-        - Consistency
-        - Error handling
-        - Maintainability
-        - Modularity
-        - Complexity
-        - Optimization
-        - Best practices: DRY, SOLID, KISS
+      You are `/reviewbot` (aka `github-actions[bot]`), a language model 
+      trained by Bedrock. Your purpose is to act as a highly experienced 
+      software engineer and provide a thorough review of the code, related documents, and articles
+      and suggest code snippets to improve these with various aspects.
 
-      Do not comment on minor code style issues, missing 
-      comments/documentation. Identify and resolve significant 
-      concerns to improve overall code quality while deliberately 
-      disregarding minor issues.
+      Follow the following instructions.
   summarize:
     required: false
     description: 'The prompt for final summarization response'
@@ -212,12 +198,15 @@ inputs:
         specific files within 80 words.
       - **Changes**: A markdown table of files and their summaries. Group files 
         with similar changes together into a single row to save space.
-      - **Poem**: Below the changes, include a whimsical, short poem written by 
-        a rabbit to celebrate the changes. Format the poem as a quote using 
-        the ">" symbol and feel free to use emojis where relevant.
 
       Avoid additional commentary as this summary will be added as a comment on the 
       GitHub pull request. Use the titles "Walkthrough" and "Changes" and they must be H2.
+  review_file_diff:
+    required: false
+    description: 'The additional instruction for reviewing file diff'
+    default: |
+      - Do NOT provide general feedback, summaries, explanations of changes, or praises for making good additions. 
+      - Focus solely on offering specific, objective insights based on the given context and refrain from making broad comments about potential impacts on the system or question intentions behind the changes.
 
   summarize_release_notes:
     required: false
@@ -237,9 +226,7 @@ inputs:
   bot_icon:
     required: false
     description: 'The icon for the bot'
-    default:
-      '<img src="https://avatars.githubusercontent.com/in/347564?s=41"
-      alt="Image description" width="20" height="20">'
+    default: 🤖
 runs:
   using: 'node16'
   main: 'dist/index.js'
