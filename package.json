@@ -5,7 +5,7 @@
   "description": "LLM-based PR Reviewer and Summarizer.",
   "main": "lib/main.js",
   "scripts": {
-    "build": "tsc",
+    "build": "cp node_modules/@dqbd/tiktoken/tiktoken_bg.wasm dist/tiktoken_bg.wasm && tsc",
     "package": "ncc build --minify --license licenses.txt",
     "format": "prettier --write '**/*.ts'",
     "format-check": "prettier --check '**/*.ts'",
