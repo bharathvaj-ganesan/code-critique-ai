@@ -1,12 +1,12 @@
 {
-  "name": "@saas-ai-labs/code-critique-ai",
-  "version": "0.0.2",
+  "name": "@bharathvaj/code-critique-ai",
+  "version": "0.0.0",
   "private": true,
   "description": "LLM-based PR Reviewer and Summarizer.",
   "main": "lib/main.js",
   "scripts": {
     "build": "cp node_modules/@dqbd/tiktoken/tiktoken_bg.wasm dist/tiktoken_bg.wasm && tsc",
-    "package": "ncc build --minify --license licenses.txt",
+    "package": "ncc build --license licenses.txt",
     "format": "prettier --write '**/*.ts'",
     "format-check": "prettier --check '**/*.ts'",
     "lint": "eslint src/**/*.ts",
@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SaaS-AI-Labs/code-critique-ai.git"
+    "url": "git+https://github.com/bharathvaj-ganesan/code-critique-ai.git"
   },
   "keywords": [
     "actions",

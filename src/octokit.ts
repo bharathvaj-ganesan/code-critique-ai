@@ -5,7 +5,6 @@ import {throttling} from '@octokit/plugin-throttling'
 
 const token = getInput('token') || process.env.GITHUB_TOKEN
 
-// @ts-ignore
 const RetryAndThrottlingOctokit = Octokit.plugin(throttling, retry)
 
 export const octokit = new RetryAndThrottlingOctokit({

@@ -24,13 +24,7 @@ export class Bot {
   constructor(options: Options, bedrockOptions: BedrockOptions) {
     this.options = options
     this.bedrockOptions = bedrockOptions
-    this.client = new BedrockRuntimeClient({
-      region: 'us-east-1',
-      credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? '',
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? ''
-      }
-    })
+    this.client = new BedrockRuntimeClient({})
   }
 
   chat = async (message: string, prefix?: string): Promise<[string, Ids]> => {
